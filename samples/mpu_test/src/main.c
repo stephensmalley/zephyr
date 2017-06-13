@@ -110,12 +110,14 @@ static int shell_cmd_write(int argc, char *argv[])
 }
 #endif /* SOC_FLASH_MCUX */
 
+u8_t data_buf[16] __aligned(sizeof(int)) = { 0x70, 0x47 };
+
 static int shell_cmd_run(int argc, char *argv[])
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	void (*func_ptr)(void) = (void (*)(void)) RAM_MEM;
+	void (*func_ptr)(void) = (void (*)(void)) ((uintptr_t)(data_buf)|0x1);
 
 	/* Run code located in RAM */
 	func_ptr();
