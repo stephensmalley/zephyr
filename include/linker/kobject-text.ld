@@ -17,7 +17,7 @@
 	_kobject_text_area_start = .;
 	*(".kobject_data.text*")
 	_kobject_text_area_end = .;
-#ifndef LINKER_PASS2
+#ifndef LINKER_PASS_FINAL
 	PROVIDE(_k_object_find = .);
 	PROVIDE(_k_object_wordlist_foreach = .);
 #endif

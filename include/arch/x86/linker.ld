@@ -114,7 +114,7 @@ SECTIONS
 	*(.gnu.linkonce.r.*)
 	. = ALIGN(8);
 	_idt_base_address = .;
-#ifdef LINKER_PASS2
+#ifdef LINKER_PASS_FINAL
 	KEEP(*(staticIdt))
 #else
 	. += CONFIG_IDT_NUM_VECTORS * 8;
@@ -123,7 +123,7 @@ SECTIONS
 #ifndef CONFIG_X86_FIXED_IRQ_MAPPING
 	. = ALIGN(4);
 	_irq_to_interrupt_vector = .;
-#ifdef LINKER_PASS2
+#ifdef LINKER_PASS_FINAL
 	KEEP(*(irq_int_vector_map))
 #else
 	. += CONFIG_MAX_IRQ_LINES;
@@ -261,9 +261,9 @@ SECTIONS
 	KEEP(*(.tss))
 	. = ALIGN(8);
 	_gdt = .;
-#ifdef LINKER_PASS2
+#ifdef LINKER_PASS_FINAL
 	KEEP(*(gdt_ram_data))
-#else /* LINKER_PASS2 */
+#else /* LINKER_PASS_FINAL */
 
 #ifdef CONFIG_USERSPACE
     #define GDT_NUM_ENTRIES 7
@@ -273,7 +273,7 @@ SECTIONS
     #define GDT_NUM_ENTRIES 3
 #endif /* CONFIG_X86_USERSPACE */
 	. += GDT_NUM_ENTRIES * 8;
-#endif /* LINKER_PASS2 */
+#endif /* LINKER_PASS_FINAL */
 #endif /* CONFIG_GDT_DYNAMIC */
 
 	. = ALIGN(4);
@@ -316,7 +316,7 @@ SECTIONS
 
 	GROUP_END(RAMABLE_REGION)
 
-#ifndef LINKER_PASS2
+#ifndef LINKER_PASS_FINAL
 	/* static interrupts */
 	SECTION_PROLOGUE(intList, (OPTIONAL),)
 	{

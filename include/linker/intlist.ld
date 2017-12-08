@@ -34,7 +34,7 @@
  * }
  */
 
-#ifndef LINKER_PASS2
+#ifndef LINKER_PASS_FINAL
 SECTION_PROLOGUE(.intList,,)
 {
 	KEEP(*(.irq_info))
