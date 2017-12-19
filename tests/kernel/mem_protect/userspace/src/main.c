@@ -157,11 +157,8 @@ volatile int *ptr = NULL;
 #if defined(CONFIG_X86)
 volatile size_t size = MMU_PAGE_SIZE;
 #elif defined(CONFIG_ARM)
-#if defined(CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT)
-volatile size_t size = POW2_CEIL(CONFIG_ZTEST_STACKSIZE);
-#else
-volatile size_t size = CONFIG_ZTEST_STACKSIZE + MPU_GUARD_ALIGN_AND_SIZE;
-#endif
+extern u8_t *_k_priv_stack_find(void *obj);
+extern k_thread_stack_t ztest_thread_stack[];
 #else
 #error "Not implemented for this architecture"
 #endif
@@ -169,11 +166,18 @@ volatile size_t size = CONFIG_ZTEST_STACKSIZE + MPU_GUARD_ALIGN_AND_SIZE;
 static void read_kernel_stack(void)
 {
 	/* Try to read from kernel stack. */
+#if defined(CONFIG_X86)
 	int s[1];
 
 	s[0] = 0;
 	ptr = &s[0];
 	ptr = (int *)((unsigned char *)ptr - size);
+#elif defined(CONFIG_ARM)
+	ptr = (int *)_k_priv_stack_find(ztest_thread_stack);
+#else
+#error "Not implemented for this architecture"
+#endif
+	printk("kernel stack is at %p\n", ptr);
 	printk("%d\n", *ptr);
 	zassert_unreachable("Read from kernel stack did not fault\n");
 }
@@ -181,11 +185,18 @@ static void read_kernel_stack(void)
 static void write_kernel_stack(void)
 {
 	/* Try to write to kernel stack. */
+#if defined(CONFIG_X86)
 	int s[1];
 
 	s[0] = 0;
 	ptr = &s[0];
 	ptr = (int *)((unsigned char *)ptr - size);
+#elif defined(CONFIG_ARM)
+	ptr = (int *)_k_priv_stack_find(ztest_thread_stack);
+#else
+#error "Not implemented for this architecture"
+#endif
+	printk("kernel stack is at %p\n", ptr);
 	*ptr = 42;
 	zassert_unreachable("Write to kernel stack did not fault\n");
 }

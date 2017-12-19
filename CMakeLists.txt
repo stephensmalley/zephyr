@@ -672,7 +672,7 @@ if(CONFIG_ARM_USERSPACE)
   add_custom_command(
     OUTPUT ${PRIV_STACKS_OUTPUT_SRC_PRE}
     COMMAND
-    ${GPERF}
+    ${GPERF} -C
     --output-file ${PRIV_STACKS_OUTPUT_SRC_PRE}
     ${PRIV_STACKS}
     DEPENDS priv_stacks

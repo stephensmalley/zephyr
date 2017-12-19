@@ -51,7 +51,7 @@ structure = """struct _k_priv_stack_map {
 footer = """%%
 u8_t *_k_priv_stack_find(void *obj)
 {
-    struct _k_priv_stack_map *map = _k_priv_stack_map_lookup((const char *)obj,
+    const struct _k_priv_stack_map *map = _k_priv_stack_map_lookup((const char *)obj,
                                     sizeof(void *));
     return map->priv_stack_addr;
 }
