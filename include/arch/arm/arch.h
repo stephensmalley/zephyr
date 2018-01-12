@@ -143,9 +143,7 @@ extern "C" {
  * @brief Calculate power of two ceiling for a buffer size input
  *
  */
-#define POW2_CEIL(x) ((1 << (31 - __builtin_clz(x))) < x ?  \
-		1 << (31 - __builtin_clz(x) + 1) : \
-		1 << (31 - __builtin_clz(x)))
+#define POW2_CEIL(x) (1 << (31 - __builtin_clz(x - 1)))
 
 #if defined(CONFIG_USERSPACE) && \
 	defined(CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT)
@@ -358,9 +356,6 @@ typedef u32_t k_mem_partition_attr_t;
 /* Syscall invocation macros. arm-specific machine constraints used to ensure
  * args land in the proper registers.
  */
-extern int _arm_do_syscall(u32_t call_id, u32_t arg1,
-	u32_t arg2, u32_t arg3, u32_t arg4, u32_t arg5, u32_t arg6);
-
 static inline u32_t _arch_syscall_invoke6(u32_t arg1, u32_t arg2, u32_t arg3,
 					  u32_t arg4, u32_t arg5, u32_t arg6,
 					  u32_t call_id)
