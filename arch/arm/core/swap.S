@@ -389,7 +389,6 @@ valid_syscall_id:
     msr CONTROL, r2
 
     /* return from SVC to the modified LR - _arm_do_syscall */
-skip_raising_privilege:
     bx lr
 #endif
 

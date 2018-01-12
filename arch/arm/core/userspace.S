@@ -63,12 +63,12 @@ SECTION_FUNC(TEXT,_arm_userspace_enter)
 
     msr PSP, r4
 
-    /* setup arguments to thread_entry function */
+    /* setup arguments to configure_mpu_mem_domain function */
     ldr r0, =_kernel
     ldr r0, [r0, #_kernel_offset_to_current]
     bl configure_mpu_mem_domain
 
-    /* setup arguments to thread_entry function */
+    /* setup arguments to configure_mpu_user_context function */
     ldr r0, =_kernel
     ldr r0, [r0, #_kernel_offset_to_current]
     bl configure_mpu_user_context
@@ -139,7 +139,7 @@ valid_syscall:
     mov r6, sp
     str r6, [r5, #8]	/* store ssf of unprivileged stack */
     ldr r6, =0
-    str r6, [r5, #12]	/* store ssf of unprivileged stack */
+    str r6, [r5, #12]	/* store zeroed padding */
 
     /* switch to privileged stack */
     msr PSP, r5
