@@ -871,6 +871,12 @@ if(CONFIG_ARM_USERSPACE)
       offsets_h
     )
 
+    set_property(TARGET
+      linker_app_sizing_script
+      PROPERTY INCLUDE_DIRECTORIES
+      ${ZEPHYR_INCLUDE_DIRS}
+    )
+
     # For ARM based systems, the size of the application data section must
     # be determined so that MPU alignment requirements can be met.
     # Create a app_sizing_prebuilt target so we can do this before the
@@ -892,24 +898,10 @@ if(CONFIG_ARM_USERSPACE)
    )
   endif()
 
+  construct_add_custom_command_for_linker_pass(linker_priv_stacks custom_command)
   add_custom_command(
-    OUTPUT linker_priv_stacks.cmd
-    DEPENDS ${LINKER_SCRIPT}
-    ${LINKER_SCRIPT_DEP}
-    # NB: This COMMAND is copy-pasted to generate linker_pass2.cmd
-    # TODO: Remove duplication
-    COMMAND ${CMAKE_C_COMPILER}
-    -x assembler-with-cpp
-    -nostdinc
-    -undef
-    -MD -MF linker_priv_stacks.cmd.dep -MT ${BASE_NAME}/linker_priv_stacks.cmd
-    ${ZEPHYR_INCLUDES}
-    ${LINKER_SCRIPT_DEFINES}
-    -E ${LINKER_SCRIPT} -P
-    -o linker_priv_stacks.cmd
-    VERBATIM
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  )
+    ${custom_command}
+    )
 
   add_custom_target(
     linker_priv_stacks_script
@@ -919,11 +911,12 @@ if(CONFIG_ARM_USERSPACE)
     offsets_h
     )
 
-  set_property(TARGET
-    linker_app_sizing_script
-    PROPERTY INCLUDE_DIRECTORIES
-    ${ZEPHYR_INCLUDE_DIRS}
-  )
+    set_property(TARGET
+      linker_priv_stacks_script
+      PROPERTY INCLUDE_DIRECTORIES
+      ${ZEPHYR_INCLUDE_DIRS}
+    )
+
 
   set(PRIV_STACK_LIB priv_stacks_output_obj_renamed_lib)
   add_executable(       priv_stacks_prebuilt misc/empty_file.c)
