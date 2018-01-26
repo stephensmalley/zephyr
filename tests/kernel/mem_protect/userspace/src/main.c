@@ -17,6 +17,8 @@
 
 K_SEM_DEFINE(uthread_start_sem, 0, 1);
 K_SEM_DEFINE(uthread_end_sem, 0, 1);
+K_SEM_DEFINE(test_revoke_sem, 0, 1);
+
 static bool give_uthread_end_sem;
 
 /* ARM is a special case, in that k_thread_abort() does indeed return
@@ -39,6 +41,7 @@ void _SysFatalErrorHandler(unsigned int reason, const NANO_ESF *pEsf)
 		k_sem_give(&uthread_end_sem);
 	}
 	ztest_test_pass();
+
 #ifndef CONFIG_ARM
 	CODE_UNREACHABLE;
 #endif
@@ -292,13 +295,78 @@ static void write_other_stack(void)
 	zassert_unreachable("Write to other thread stack did not fault\n");
 }
 
+static void revoke_access_kobject_noaccess(void)
+{
+	/* Attempt to revoke access to kobject */
+	k_object_access_revoke(&ksem, k_current_get());
+
+	zassert_unreachable("Revoke access to unauthorized object "
+		"did not fault\n");
+}
+
+static void access_after_revoke(void)
+{
+	k_object_access_revoke(&test_revoke_sem, k_current_get());
+
+	k_sem_take(&test_revoke_sem, K_NO_WAIT);
+
+	zassert_unreachable("Using revoked object did not fault\n");
+}
+
+static void unpriv_thread(k_tid_t parentThread)
+{
+	/* The following should cause a fault */
+	k_object_access_revoke(&test_revoke_sem, parentThread);
+
+	zassert_unreachable("Able to revoke kernel object from "
+		"privileged thread\n");
+}
+
+__kernel struct k_thread umode_thread;
+K_THREAD_STACK_DEFINE(umode_thread_stack, STACKSIZE);
+
+static void revoke_other_thread(void)
+{
+	/* Create user mode thread */
+	k_thread_create(&umode_thread, umode_thread_stack, STACKSIZE,
+			(k_thread_entry_t)unpriv_thread, k_current_get(),
+			NULL, NULL, -1, K_USER | K_INHERIT_PERMS, K_NO_WAIT);
+
+	/*
+	 * This ensures that the created thread properly triggers a
+	 * ztest_test_pass()/ztest_test_fail() to the run_test()
+	 * thread as documented in ztest.c .
+	 */
+	k_thread_abort(k_current_get());
+}
+
+static void umode_enter_func(void)
+{
+	if (_is_user_context())	{
+		/*
+		 * Have to explicitly call as run_test only calls
+		 * ztest_test_fail().  If this is not called, thread "hangs".
+		 */
+		ztest_test_pass();
+	} else {
+		zassert_unreachable("Thread did not enter user mode\n");
+	}
+}
+
+static void user_from_kernel_mode_test(void)
+{
+	k_thread_user_mode_enter((k_thread_entry_t)umode_enter_func,
+			NULL, NULL, NULL);
+}
+
 void test_main(void)
 {
 	k_thread_access_grant(k_current_get(),
 			      &kthread_thread, &kthread_stack,
 			      &uthread_thread, &uthread_stack,
+			      &umode_thread, &umode_thread_stack,
 			      &uthread_start_sem, &uthread_end_sem,
-			      NULL);
+			      &test_revoke_sem, NULL);
 	ztest_test_suite(test_userspace,
 			 ztest_user_unit_test(is_usermode),
 			 ztest_user_unit_test(write_control),
@@ -315,7 +383,11 @@ void test_main(void)
 			 ztest_user_unit_test(pass_noperms_object),
 			 ztest_user_unit_test(start_kernel_thread),
 			 ztest_user_unit_test(read_other_stack),
-			 ztest_user_unit_test(write_other_stack)
+			 ztest_user_unit_test(write_other_stack),
+			 ztest_user_unit_test(revoke_access_kobject_noaccess),
+			 ztest_user_unit_test(access_after_revoke),
+			 ztest_user_unit_test(revoke_other_thread),
+			 ztest_unit_test(user_from_kernel_mode_test)
 		);
 	ztest_run_test_suite(test_userspace);
 }
