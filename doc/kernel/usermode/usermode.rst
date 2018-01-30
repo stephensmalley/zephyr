@@ -188,3 +188,4 @@ for execution after the kernel starts:
     kernelobjects.rst
     syscalls.rst
     memory_domain.rst
+    arm_stack_objects.rst
